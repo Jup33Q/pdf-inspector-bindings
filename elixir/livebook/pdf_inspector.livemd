@@ -7,6 +7,17 @@
 # (a Rust toolchain is required).
 System.put_env("PDF_INSPECTOR_EX_BUILD", "1")
 
+# LiveBook.app (macOS GUI) does not inherit your shell PATH — make sure
+# cargo (rustup) is reachable for the NIF source build.
+cargo_dir = Path.expand("~/.cargo/bin")
+
+unless String.contains?(System.get_env("PATH") || "", cargo_dir) do
+  System.put_env("PATH", (System.get_env("PATH") || "") <> ":" <> cargo_dir)
+end
+
+System.find_executable("cargo") ||
+  raise "cargo (Rust toolchain) not found — install it via https://rustup.rs"
+
 Mix.install([
   {:pdf_inspector_ex, "~> 0.1"}
 ])
