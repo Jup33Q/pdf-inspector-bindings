@@ -26,7 +26,8 @@ defmodule PdfInspector.MixProject do
   defp deps do
     [
       {:rustler, "~> 0.38.0", runtime: false},
-      {:rustler_precompiled, "~> 0.9"}
+      {:rustler_precompiled, "~> 0.9"},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
   end
 
@@ -40,7 +41,9 @@ defmodule PdfInspector.MixProject do
       name: "pdf_inspector_ex",
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib native .formatter.exs mix.exs README.md LICENSE checksum-*.exs)
+      # checksum-*.exs is added by P3 (release CI generates it via
+      # `mix rustler_precompiled.download` once precompiled artifacts exist).
+      files: ~w(lib native .formatter.exs mix.exs README.md LICENSE)
     ]
   end
 end
