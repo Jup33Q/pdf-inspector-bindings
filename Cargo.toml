@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
 members = ["ffi-core", "elixir/native/pdf_inspector_nif"]
+# Vendored copy of ffi-core shipped inside the hex package (synced by
+# scripts/vendor_ffi_core.sh). Excluded so cargo does not treat it as a
+# workspace member; the NIF crate path-depends on it directly.
+exclude = ["elixir/native/ffi-core"]
 
 [workspace.package]
 version = "0.1.0"

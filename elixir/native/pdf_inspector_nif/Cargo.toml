@@ -1,9 +1,11 @@
 [package]
 name = "pdf_inspector_nif"
 description = "Rustler NIFs over ffi-core for the pdf_inspector_ex Hex package"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
+# Flattened (no workspace inheritance): this crate must also build standalone
+# from the hex package, where no parent workspace exists.
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
 publish = false
 
 [lib]
@@ -16,5 +18,7 @@ crate-type = ["cdylib"]
 # Keep in sync with the {:rustler, ...} requirement in elixir/mix.exs.
 rustler = "0.38.0"
 # Reuse the P0 flat facade as a plain rlib; the UniFFI export layer is not
-# touched and no extern "C" is written by hand.
-ffi-core = { path = "../../../ffi-core" }
+# touched and no extern "C" is written by hand. Points at the vendored copy
+# (synced by scripts/vendor_ffi_core.sh, package-renamed to avoid a lockfile
+# collision with the canonical ffi-core) so the hex package is self-contained.
+ffi-core = { path = "../ffi-core", package = "ffi-core-vendored" }

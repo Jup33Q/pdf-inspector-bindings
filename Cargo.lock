@@ -492,6 +492,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ffi-core-vendored"
+version = "0.1.0"
+dependencies = [
+ "pdf-inspector",
+ "uniffi",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -902,7 +910,7 @@ dependencies = [
 name = "pdf_inspector_nif"
 version = "0.1.0"
 dependencies = [
- "ffi-core",
+ "ffi-core-vendored",
  "rustler",
 ]
 
