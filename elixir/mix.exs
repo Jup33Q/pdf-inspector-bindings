@@ -13,6 +13,7 @@ defmodule PdfInspector.MixProject do
       description: description(),
       package: package(),
       deps: deps(),
+      docs: docs(),
       source_url: @source_url
     ]
   end
@@ -36,6 +37,16 @@ defmodule PdfInspector.MixProject do
       "classification / markdown-extraction library."
   end
 
+  defp docs do
+    [
+      main: "readme",
+      # The LiveBook notebook doubles as the getting-started guide on hexdocs
+      # (ex_doc renders .livemd extras with a "Run in Livebook" badge).
+      extras: ["README.md", "livebook/pdf_inspector.livemd"],
+      source_ref: "main"
+    ]
+  end
+
   defp package do
     [
       name: "pdf_inspector_ex",
@@ -43,7 +54,7 @@ defmodule PdfInspector.MixProject do
       links: %{"GitHub" => @source_url},
       # checksum-*.exs is added by P3 (release CI generates it via
       # `mix rustler_precompiled.download` once precompiled artifacts exist).
-      files: ~w(lib native .formatter.exs mix.exs README.md LICENSE)
+      files: ~w(lib native livebook .formatter.exs mix.exs README.md LICENSE)
     ]
   end
 end

@@ -45,6 +45,29 @@ export PDF_INSPECTOR_EX_BUILD=1
 mix deps.get && mix compile
 ```
 
+## Examples
+
+- **LiveBook**: [`livebook/pdf_inspector.livemd`](livebook/pdf_inspector.livemd)
+  (also rendered on hexdocs with a *Run in Livebook* badge) — full walkthrough:
+  four entry points, error handling, and the Pipeline DSL.
+- **`.exs` scripts** (in this repo, run from `elixir/`):
+
+  ```bash
+  PDF_INSPECTOR_EX_BUILD=1 mix run examples/quickstart.exs     # four entry points + errors
+  PDF_INSPECTOR_EX_BUILD=1 mix run examples/pipeline_dsl.exs   # Pipeline DSL + OCR handoff
+  ```
+
+- **iex**:
+
+  ```elixir
+  iex> {:ok, r} = PdfInspector.process(File.read!("../fixtures/normal.pdf"))
+  iex> r.pdf_type
+  :text_based
+  iex> {:ok, c} = PdfInspector.classify(File.read!("../fixtures/normal.pdf"))
+  iex> c.pages_needing_ocr   # 0-indexed
+  []
+  ```
+
 ## Development (this monorepo)
 
 ```bash

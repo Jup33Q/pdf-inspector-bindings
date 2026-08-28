@@ -1,0 +1,136 @@
+# PdfInspector — PDF 分类与 Markdown 提取
+
+```elixir
+# 0.1.1 起 hex 包自包含 ffi-core 源码，可直接 {:pdf_inspector_ex, "~> 0.1"}；
+# 在预编译 NIF 产物（release CI）发布之前，需要 PDF_INSPECTOR_EX_BUILD=1
+# 强制源码编译（本机需 Rust 工具链）。
+System.put_env("PDF_INSPECTOR_EX_BUILD", "1")
+
+Mix.install([
+  {:pdf_inspector_ex, "~> 0.1"}
+])
+```
+
+Elixir bindings for [firecrawl/pdf-inspector](https://github.com/firecrawl/pdf-inspector)，
+通过 Rustler dirty-CPU NIF 调用，不会卡住 BEAM 调度器。输入一律是 PDF 二进制，
+文件 IO 由调用方负责。
+
+## 准备测试 PDF
+
+直接拉取仓库里的 fixture（也可以换成 `File.read!` 读本地文件）：
+
+```elixir
+{:ok, _} = Application.ensure_all_started(:inets)
+
+{:ok, {{_, 200, _}, _headers, normal_pdf}} =
+  :httpc.request(
+    :get,
+    {~c"https://raw.githubusercontent.com/Jup33Q/pdf-inspector-bindings/main/fixtures/normal.pdf", []},
+    [],
+    body_format: :binary
+  )
+
+{:ok, {{_, 200, _}, _headers, encrypted_pdf}} =
+  :httpc.request(
+    :get,
+    {~c"https://raw.githubusercontent.com/Jup33Q/pdf-inspector-bindings/main/fixtures/encrypted.pdf", []},
+    [],
+    body_format: :binary
+  )
+
+byte_size(normal_pdf)
+```
+
+## classify/1 —— 最轻的路由入口
+
+只给 PDF 类型 + 需要 OCR 的页码（**0-indexed**），不产出 markdown：
+
+```elixir
+{:ok, classification} = PdfInspector.classify(normal_pdf)
+
+{classification.pdf_type, classification.page_count, classification.pages_needing_ocr}
+```
+
+## process/1 —— 完整管线
+
+分类 + 全文 markdown 提取：
+
+```elixir
+{:ok, result} = PdfInspector.process(normal_pdf)
+
+result.pdf_type
+```
+
+```elixir
+result.markdown
+```
+
+注意 `%PdfInspector.Result{}` 里的过程级页码列表（`pages_needing_ocr`、
+`pages_with_tables`、`pages_with_columns`）是 **1-indexed** 的（上游约定）。
+
+## extract_pages/2 —— 逐页提取
+
+`pages` 参数为 **0-indexed** 页码列表，`nil` 表示全部页；越界页返回
+空 markdown + `needs_ocr: true` 占位（上游行为）：
+
+```elixir
+{:ok, pages} = PdfInspector.extract_pages(normal_pdf, [0, 1])
+
+for p <- pages.pages, do: {p.page, byte_size(p.markdown), p.needs_ocr}
+```
+
+```elixir
+{:ok, oob} = PdfInspector.extract_pages(normal_pdf, [99])
+hd(oob.pages)
+```
+
+## 错误处理
+
+所有入口返回 `{:error, %PdfInspector.Error{}}`，`code` 为六个 atom 之一：
+`:io | :parse | :encrypted | :invalid_structure | :not_a_pdf | :internal_panic`：
+
+```elixir
+{:error, %PdfInspector.Error{code: :encrypted} = err} = PdfInspector.process(encrypted_pdf)
+err
+```
+
+## Pipeline DSL —— 声明式路由管线
+
+`use PdfInspector.Pipeline` 后用 `route <pdf_type>, <strategy>` 声明路由表，
+编译期校验（未知 pdf_type / 重复 route / 非法策略直接 raise）：
+
+```elixir
+defmodule MyOcr do
+  @behaviour PdfInspector.Pipeline.Ocr
+
+  @impl true
+  def extract(_binary, pages_0_indexed) do
+    # 真实实现在这里跑 OCR 引擎；{:error, _} 不会丢失已提取的结果，
+    # 而是记入 result.ocr_errors
+    {:ok, Map.new(pages_0_indexed, &{&1, "<ocr text for page #{&1}>"})}
+  end
+end
+
+defmodule MyPipeline do
+  use PdfInspector.Pipeline
+
+  route :text_based, :markdown        # process/1 → 全文 markdown
+  route :mixed,      :pages           # extract_pages/2 → 逐页 markdown
+  route :scanned,    {:ocr, MyOcr}    # needs_ocr 页移交 OCR
+  route :image_based, :skip           # 只分类不提取
+
+  fallback :classify                  # 可选，默认 :classify
+end
+```
+
+```elixir
+{:ok, piped} = MyPipeline.run(normal_pdf)
+
+{piped.strategy, byte_size(piped.markdown || ""), piped.ocr_pages}
+```
+
+分类错误（如加密 PDF）不会进入任何策略，直接透传：
+
+```elixir
+MyPipeline.run(encrypted_pdf)
+```

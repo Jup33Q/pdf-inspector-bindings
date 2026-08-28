@@ -97,11 +97,21 @@ Rustler NIF package `pdf_inspector_ex`: all four entries
 (`process/1`, `detect/1`, `classify/1`, `extract_pages/2`) are scheduled
 `DirtyCpu` (extraction takes 10–200 ms, far past the 1 ms normal-NIF
 budget). The `native/pdf_inspector_nif` crate reuses ffi-core as an rlib
-path dependency (workspace member); the UniFFI export layer is untouched
-and no `extern "C"` is written by hand. Errors map to
+path dependency — pointing at a **vendored copy**
+(`elixir/native/ffi-core`, synced from the canonical crate by
+`scripts/vendor_ffi_core.sh`, package-renamed to `ffi-core-vendored` to
+avoid a Cargo.lock collision) so the hex tarball is self-contained and
+source builds work for hex users. Both vendored/NIF Cargo.tomls have
+flattened `workspace.package` fields (they must build with no parent
+workspace). The UniFFI export layer is untouched and no `extern "C"` is
+written by hand. Errors map to
 `{:error, %PdfInspector.Error{code: atom, message: String}}` via the
 `FfiError` record; result structs mirror the `Ffi*` shapes via `NifStruct`
 (`pdf_type` → `:text_based | :scanned | :image_based | :mixed`).
+
+Examples: `elixir/examples/quickstart.exs` + `pipeline_dsl.exs` (runnable
+`.exs` scripts) and `elixir/livebook/pdf_inspector.livemd` (LiveBook
+notebook, also an ex_doc extra on hexdocs).
 
 ```bash
 cd elixir
