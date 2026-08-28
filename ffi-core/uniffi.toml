@@ -1,0 +1,7 @@
+# UniFFI bindings config (consumed by `uniffi-bindgen generate --config`).
+# The Swift source target is `PdfInspectorSwift`; the XCFramework/FFI module
+# (modulemap + header generated alongside the .swift) is `PdfInspectorFFI`.
+[bindings.swift]
+module_name = "PdfInspectorSwift"
+ffi_module_name = "PdfInspectorFFI"
+ffi_module_filename = "PdfInspectorFFI"

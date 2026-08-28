@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["ffi-core", "elixir/native/pdf_inspector_nif"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/firecrawl/pdf-inspector"
+
+# P0 constraint: thin LTO + single codegen unit.
+# NOTE: deliberately no `panic = "abort"` — ffi-core relies on catch_unwind
+# at the FFI boundary, which requires the default unwind strategy.
+[profile.release]
+lto = "thin"
+codegen-units = 1

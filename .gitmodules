@@ -1,0 +1,6 @@
+[submodule "swift"]
+	path = swift
+	url = https://github.com/Jup33Q/pdf-inspector-swift.git
+[submodule "examples/pdf_inspector_swift"]
+	path = examples/pdf_inspector_swift
+	url = https://github.com/Jup33Q/pdf-inspector-swiftui.git
